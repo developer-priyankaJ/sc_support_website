@@ -1,0 +1,10 @@
+{
+  "docs": {
+    "Getting Started": ["understand_your_actions_in_sh","doc1" ],
+    "Using ScopeHub": ["doc2"],
+    "Profile & Preferences": ["doc3"]
+  },
+  "docs-other": {
+    "First Category": ["doc4", "doc5"]
+  }
+}

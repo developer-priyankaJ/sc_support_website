@@ -1,0 +1,28 @@
+# Definition file for AWS CodeDeploy
+
+version: 0.0
+os: linux
+files:
+   - source: /
+     destination: /home/support/public_html/
+permissions:
+   - object: /home/support/public_html/
+     pattern: "**"
+     owner: root
+     group: root
+     mode: 755
+     type:
+       - file       
+hooks:
+ # BeforeInstall:
+ #   - location: scripts/codedeploy-prepare.sh
+ #     runas: root
+ # AfterInstall:
+ #   - location: scripts/codedeploy-setup-app.sh
+ #     runas: root
+  ApplicationStart:
+    - location: scripts/start_server.sh
+      timeout: 160
+      runas: root       
+
+

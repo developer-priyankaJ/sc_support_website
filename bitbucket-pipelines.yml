@@ -1,0 +1,93 @@
+# Set up by adding these environment variables:
+# AWS_ACCESS_KEY_ID
+# AWS_SECRET_ACCESS_KEY (set as Secured)
+# AWS_REGION
+# AWS_CODEDEPLOY_APP
+# AWS_CODEDEPLOY_GROUP
+# AWS_S3_BUCKET
+
+#image: davidkassa/yarn-angular-cli-firebase-tools
+image: node:9
+# Only do a full deployment from the master branch
+pipelines:
+  branches:
+    master:
+###################################### QA SECTION ##################################################
+    - step:
+        name: Build For QA
+        script:
+          - apt-get update
+          - apt-get install -y zip
+          - cd website/
+          - npm cache clean --force
+          - npm install
+          - npm run-script build
+          - cd ..
+          - zip -r artifact.zip ./*
+        artifacts:
+          - artifact.zip
+    - step:
+        name: Deploy to QA
+        deployment: QA
+        script:
+          - pipe: atlassian/aws-code-deploy:0.2.7
+            variables:
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+              AWS_DEFAULT_REGION: 'us-east-2'
+              COMMAND: 'upload'
+              APPLICATION_NAME: $AWS_CODEDEPLOY_APP
+              S3_BUCKET: $AWS_S3_BUCKET_QA
+              ZIP_FILE: 'artifact.zip'
+          - pipe: atlassian/aws-code-deploy:0.2.7
+            variables:
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+              AWS_DEFAULT_REGION: 'us-east-2'
+              COMMAND: 'deploy'
+              APPLICATION_NAME: $AWS_CODEDEPLOY_APP
+              DEPLOYMENT_GROUP: $AWS_CODEDEPLOY_GROUP_QA
+              WAIT: 'true'
+              S3_BUCKET: $AWS_S3_BUCKET_QA
+              IGNORE_APPLICATION_STOP_FAILURES: 'true'
+              FILE_EXISTS_BEHAVIOR: 'OVERWRITE'
+##################################### PROD SECTION ##################################################
+    - step:
+        name: Build for Production
+        script:
+          - apt-get update
+          - apt-get install -y zip
+          - cd website/
+          - npm cache clean --force
+          - npm install
+          - npm run-script build
+          - cd ..
+          - zip -r artifact.zip ./*
+        artifacts:
+          - artifact.zip
+    - step:
+        name: Deploy to Production
+        deployment: Production
+        trigger: manual
+        script:
+          - pipe: atlassian/aws-code-deploy:0.2.7
+            variables:
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+              AWS_DEFAULT_REGION: 'eu-west-3'
+              COMMAND: 'upload'
+              APPLICATION_NAME: $AWS_CODEDEPLOY_APP
+              S3_BUCKET: $AWS_S3_BUCKET_PROD
+              ZIP_FILE: 'artifact.zip'
+          - pipe: atlassian/aws-code-deploy:0.2.7
+            variables:
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+              AWS_DEFAULT_REGION: 'eu-west-3'
+              COMMAND: 'deploy'
+              APPLICATION_NAME: $AWS_CODEDEPLOY_APP
+              DEPLOYMENT_GROUP: $AWS_CODEDEPLOY_GROUP_PROD
+              WAIT: 'true'
+              S3_BUCKET: $AWS_S3_BUCKET_PROD
+              IGNORE_APPLICATION_STOP_FAILURES: 'true'
+              FILE_EXISTS_BEHAVIOR: 'OVERWRITE'
